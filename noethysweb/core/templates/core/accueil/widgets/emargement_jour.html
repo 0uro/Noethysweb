@@ -1,0 +1,64 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fa fa-check-square-o margin-r-5"></i>Émargement du jour
+        </h3>
+        <div class="card-tools">
+            <a href="{% url 'pointeuse_conso' %}" class="btn btn-tool" title="Ouvrir l'émargement"><i class="fa fa-external-link"></i></a>
+            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fa fa-minus"></i></button>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        {% if emargement_widget_activites %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-0 emargement-widget-table">
+                    <thead>
+                        <tr>
+                            <th class="emargement-widget-nom">Enfant</th>
+                            {% for activite in emargement_widget_activites %}
+                                <th class="text-center" title="{{ activite.nom }}">{{ activite.abrege|default:activite.nom }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in emargement_widget_lignes %}
+                            <tr>
+                                <td class="emargement-widget-nom">{{ ligne.individu.nom }} {{ ligne.individu.prenom|default:"" }}</td>
+                                {% for activite in emargement_widget_activites %}
+                                    {% with etat=ligne.etats|get_item:activite.pk %}
+                                    <td class="text-center emargement-widget-etat emargement-widget-{{ etat|default:'vide' }}">
+                                        {% if etat == 'present' %}<span title="Présent">✓</span>
+                                        {% elif etat == 'reservation' %}<span title="Réservé / à pointer">•</span>
+                                        {% elif etat == 'absentj' %}<span title="Absent justifié">AJ</span>
+                                        {% elif etat == 'absenti' %}<span title="Absent injustifié">A</span>
+                                        {% elif etat == 'attente' %}<span title="En attente">?</span>
+                                        {% elif etat == 'demande' %}<span title="Demande">D</span>
+                                        {% elif etat == 'refus' %}<span title="Refus">×</span>
+                                        {% else %}<span class="text-muted">—</span>{% endif %}
+                                    </td>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="99" class="text-muted text-center py-3">Aucune consommation prévue aujourd'hui.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-muted text-center py-3">Aucune activité ouverte aujourd'hui.</div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .emargement-widget-table { font-size: 12px; }
+    .emargement-widget-table th { white-space: nowrap; vertical-align: middle; }
+    .emargement-widget-nom { min-width: 145px; white-space: nowrap; }
+    .emargement-widget-etat { min-width: 48px; font-weight: 600; vertical-align: middle !important; }
+    .emargement-widget-present { background: #d4edda; color: #155724; }
+    .emargement-widget-reservation { background: #fff3cd; color: #856404; }
+    .emargement-widget-absentj { background: #d1ecf1; color: #0c5460; }
+    .emargement-widget-absenti { background: #f8d7da; color: #721c24; }
+</style>

@@ -40,3 +40,4 @@ pcloud
 crispy-bootstrap4
 openpyxl
 py7zr
+whitenoise==6.7.0
