@@ -40,4 +40,5 @@ pcloud
 crispy-bootstrap4
 openpyxl
 py7zr
+django-debug-toolbar
 whitenoise==6.7.0
