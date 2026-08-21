@@ -146,11 +146,22 @@ class View(CustomView, TemplateView):
             data['selection_classes'] = [classe.pk for classe in data['liste_classes']]
 
         # Importation des inscriptions
-        conditions = Q(date_debut__lte=data["date_min"]) & (Q(date_fin__isnull=True) | Q(date_fin__gte=data["date_max"]))
-        if ajouter_individu == "INSCRITS_TOUS":
+        conditions = Q(date_debut__lte=data["date_min"]) & (
+            Q(date_fin__isnull=True) | Q(date_fin__gte=data["date_max"])
+        )
+
+        # La vue d'émargement peut demander l'affichage de tous les inscrits
+        # actifs de l'activité, même s'ils n'ont encore aucune consommation.
+        if getattr(self, "afficher_inscrits_sans_conso", False) or ajouter_individu == "INSCRITS_TOUS":
             conditions &= Q(activite=data["selection_activite"])
         elif ajouter_individu and ajouter_individu.startswith("INSCRITS_GROUPE"):
-            conditions &= Q(activite=data["selection_activite"], groupe_id=int(ajouter_individu.split(":")[1])) | Q(pk__in=liste_idinscriptions)
+            conditions &= (
+                Q(
+                    activite=data["selection_activite"],
+                    groupe_id=int(ajouter_individu.split(":")[1]),
+                )
+                | Q(pk__in=liste_idinscriptions)
+            )
         else:
             conditions &= Q(pk__in=liste_idinscriptions)
 
@@ -173,4 +184,3 @@ class View(CustomView, TemplateView):
         # Incorpore les données génériques
         data.update(Get_generic_data(data))
         return data
-
