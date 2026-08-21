@@ -1954,10 +1954,8 @@ class Famille(models.Model):
         # Code comptable
         if maj_code_compta:
             if not self.code_compta and rattachements:
-                titulaire = rattachements.first()
-                nom = utils_texte.Supprimer_accents(titulaire.individu.nom.upper())
-                prenom = utils_texte.Supprimer_accents(titulaire.individu.prenom.upper()) if titulaire.individu.prenom else ""
-                self.code_compta = ("%d%s_%s" % (self.idfamille, nom, prenom))[:15]
+                from individus.utils.utils_familles import Generer_code_compta_famille
+                self.code_compta = Generer_code_compta_famille(famille=self, rattachements=rattachements)
 
         self.save()
 
@@ -3272,6 +3270,9 @@ class ContactUrgence(models.Model):
         if self.autorisation_appel:
             autorisations.append("""<span class='badge badge-success' title="Contacter en cas d'urgence"><i class='fa fa-phone margin-r-5'></i>Urgence</span>""")
         return " ".join(autorisations)
+
+    def Get_autorisations_b5(self):
+        return self.Get_autorisations().replace("badge-success", "rounded-pill text-bg-success")
 
 
 class Assurance(models.Model):
