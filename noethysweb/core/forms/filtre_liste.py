@@ -113,7 +113,10 @@ def Ajouter_filtre(request):
                 dict_resultat["criteres"].append(valeur)
             if not valeur and key not in ("critere_date_optionnelle", "critere_periode_naiss"):
                 return JsonResponse({"erreur": "Vous n'avez pas renseigné correctement le critère"}, status=401)
-            if key not in ("critere_etats", "critere_etats_inscriptions", "critere_periode_naiss"):
+            if (
+                valeur
+                and key not in ("critere_etats", "critere_etats_inscriptions", "critere_periode_naiss")
+            ):
                 liste_labels_criteres.append("'%s'" % valeur)
 
         if key.startswith("liste_"):
