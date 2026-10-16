@@ -21,6 +21,7 @@
                     {# Boutons de commandes #}
                     <div class="buttonHolder">
                         <button class="btn btn-primary" onclick="impression_pdf()" title="Aperçu PDF de la facture"><i class='fa fa-file-pdf-o margin-r-5'></i>Aperçu PDF</button>
+			<button class="btn btn-success" onclick="impression_pdf('zip')" title="Télécharger les factures individuellement"><i class="fa fa-file-archive-o margin-r-5"></i>Télécharger ZIP</button>
                         <a class="btn btn-danger" href="{% url 'facturation_toc' %}"><i class='fa fa-ban margin-r-5'></i>Annuler</a>
                     </div>
 
@@ -42,27 +43,27 @@
 
         <script>
 
-            // Impression du PDF
-            function impression_pdf() {
-                $.ajax({
-                    type: "POST",
-                    url: "{% url 'ajax_factures_impression_pdf' %}",
-                    data: {
-                        form_modele_impression: JSON.stringify($("#choix_modele_impression_form").serializeObject()),
-                        form_modele_document: JSON.stringify($("#choix_modele_form").serializeObject()),
-                        form_parametres: JSON.stringify($("#options_impression_form").serializeObject()),
-                        factures_cochees: JSON.stringify(get_coches()),
-                        csrfmiddlewaretoken: '{{ csrf_token }}',
-                    },
-                    datatype: "json",
-                    success: function(data){
-                        charge_pdf(data);
-                    },
-                    error: function(data) {
-                        toastr.error(data.responseJSON.erreur);
-                    }
-                })
-            };
+	function impression_pdf(format_sortie = "pdf") {
+	    $.ajax({
+	        type: "POST",
+	        url: "{% url 'ajax_factures_impression_pdf' %}",
+	        data: {
+	            form_modele_impression: JSON.stringify($("#choix_modele_impression_form").serializeObject()),
+	            form_modele_document: JSON.stringify($("#choix_modele_form").serializeObject()),
+	            form_parametres: JSON.stringify($("#options_impression_form").serializeObject()),
+	            factures_cochees: JSON.stringify(get_coches()),
+	            format_sortie: format_sortie,
+	            csrfmiddlewaretoken: '{{ csrf_token }}',
+	        },
+	        datatype: "json",
+	        success: function(data) {
+	            charge_pdf(data, format_sortie === "zip");
+	        },
+	        error: function(data) {
+	            toastr.error(data.responseJSON?.erreur || "Erreur lors de l'impression");
+	        }
+	    });
+	}
 
         </script>
 

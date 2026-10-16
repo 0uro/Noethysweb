@@ -4,6 +4,11 @@
 #  Distribué sous licence GNU GPL.
 
 import json
+import os
+import re
+import uuid
+import zipfile
+from django.conf import settings
 from django.http import JsonResponse
 from core.views.mydatatableview import MyDatatable, columns, helpers
 from core.views import crud
@@ -45,12 +50,73 @@ def Impression_pdf(request):
         dict_options = form_parametres.cleaned_data
         dict_options.update(form_modele.cleaned_data)
 
-    # Création du PDF
+    # Création des documents
     from facturation.utils import utils_facturation
+
     facturation = utils_facturation.Facturation()
-    resultat = facturation.Impression(liste_factures=factures_cochees, dict_options=dict_options)
+    format_sortie = request.POST.get("format_sortie", "pdf")
+
+    if format_sortie == "zip":
+        resultat = facturation.Impression(
+            liste_factures=factures_cochees,
+            dict_options=dict_options,
+            mode_email=True
+        )
+
+        if not resultat or not resultat["noms_fichiers"]:
+            return JsonResponse(
+                {"erreur": "Aucune facture à exporter"},
+                status=400
+            )
+
+        nom_zip = "/temp/%s.zip" % uuid.uuid4()
+        chemin_zip = os.path.join(
+            settings.MEDIA_ROOT, nom_zip.lstrip("/")
+        )
+
+        os.makedirs(os.path.dirname(chemin_zip), exist_ok=True)
+
+        try:
+            with zipfile.ZipFile(
+                chemin_zip, "w", zipfile.ZIP_DEFLATED
+            ) as archive:
+
+                for idfacture, donnees in resultat["noms_fichiers"].items():
+                    nom_pdf = donnees["nom_fichier"]
+                    chemin_pdf = os.path.join(
+                        settings.MEDIA_ROOT, nom_pdf.lstrip("/")
+                    )
+
+                    # Nom de facture lisible et unique
+                    numero = donnees.get("valeurs", {}).get(
+                        "{NUMERO_FACTURE}", str(idfacture)
+                    )
+                    numero = re.sub(r"[^a-zA-Z0-9_-]", "_", str(numero))
+
+                    archive.write(
+                        chemin_pdf,
+                        arcname="Facture_%s_%s.pdf" % (numero, idfacture)
+                    )
+
+            return JsonResponse({"nom_fichier": nom_zip})
+
+        except (OSError, zipfile.BadZipFile) as erreur:
+            if os.path.exists(chemin_zip):
+                os.remove(chemin_zip)
+            return JsonResponse(
+                {"erreur": "Impossible de créer le ZIP : %s" % erreur},
+                status=500
+            )
+
+    # Comportement PDF actuel inchangé
+    resultat = facturation.Impression(
+        liste_factures=factures_cochees,
+        dict_options=dict_options
+    )
+
     if not resultat:
         return JsonResponse({"success": False}, status=401)
+
     return JsonResponse({"nom_fichier": resultat["nom_fichier"]})
 
 
